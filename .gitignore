@@ -1,0 +1,9 @@
+__pycache__/
+.venv/
+.pytest_cache/
+
+# downloaded / generated stuff, rebuild with the scripts
+data/raw/
+data/processed/
+checkpoints/
+*.pt
