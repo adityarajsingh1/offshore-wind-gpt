@@ -1,0 +1,108 @@
+# Wikipedia articles used as the pretraining corpus.
+# One title per line. Add more if you find good ones!
+
+# the basics
+Offshore wind power
+Wind power
+Wind turbine
+Wind turbine design
+Wind farm
+Wind resource assessment
+Capacity factor
+Betz's law
+Wind shear
+Wind power forecasting
+Wake effect
+
+# turbines and components
+Floating wind turbine
+Vertical-axis wind turbine
+Wind turbine blade
+Nacelle (wind turbine)
+Gearbox
+Direct-drive mechanism
+Permanent magnet synchronous generator
+Doubly-fed electric machine
+Yaw drive
+Pitch bearing
+Anemometer
+Lidar
+SCADA
+
+# foundations and the sea
+Monopile
+Jacket (offshore)
+Tripod (offshore)
+Gravity-based structure
+Spar (platform)
+Tension-leg platform
+Semi-submersible
+Suction caisson
+Scour (hydraulics)
+Marine geotechnical engineering
+Wave power
+Metocean
+Significant wave height
+Offshore construction
+
+# grid and electrical
+Submarine power cable
+High-voltage direct current
+HVDC converter station
+Electrical substation
+Electrical grid
+Grid code
+Power-to-X
+Hydrogen production
+Energy storage
+
+# installation, operations, people
+Jackup rig
+Crane vessel
+Crew transfer vessel
+Service operation vessel
+Heavy-lift ship
+Predictive maintenance
+Condition monitoring
+Wind turbine syndrome
+
+# economics and policy
+Levelized cost of electricity
+Contract for difference
+Feed-in tariff
+Power purchase agreement
+Renewable energy
+Renewable energy in the European Union
+Environmental impact of wind power
+Marine spatial planning
+
+# projects and places
+List of offshore wind farms
+Hornsea Wind Farm
+Dogger Bank Wind Farm
+London Array
+Horns Rev
+Vindeby Offshore Wind Farm
+Block Island Wind Farm
+Hywind Scotland
+Kincardine Offshore Wind Farm
+Borssele Offshore Wind Farm
+Vineyard Wind
+Wind power in the United Kingdom
+Wind power in Germany
+Wind power in Denmark
+Wind power in the Netherlands
+Wind power in China
+Wind power in the United States
+Wind power in Taiwan
+North Sea
+Baltic Sea
+
+# companies
+Ørsted (company)
+Vestas
+Siemens Gamesa
+GE Vernova
+RWE
+Equinor
+Vattenfall
