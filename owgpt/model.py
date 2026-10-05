@@ -110,10 +110,10 @@ class GPT(nn.Module):
         if targets is None:
             return logits, None
 
-        loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1), reduction="none")
+        loss = F.cross_entropy(logits.reshape(-1, logits.size(-1)), targets.reshape(-1), reduction="none")
         if loss_mask is not None:
             # for fine-tuning: only learn from the answer tokens, not the question
-            mask = loss_mask.view(-1).float()
+            mask = loss_mask.reshape(-1).float()
             loss = (loss * mask).sum() / mask.sum().clamp(min=1)
         else:
             loss = loss.mean()
