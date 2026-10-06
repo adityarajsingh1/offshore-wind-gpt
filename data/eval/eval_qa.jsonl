@@ -1,0 +1,20 @@
+{"question": "Why do turbines at sea produce more energy than ones on land?", "answer": "Winds over the sea are stronger and steadier, and power rises with the cube of wind speed.", "keywords": ["stronger", "steadier", "cube"]}
+{"question": "What is the theoretical maximum efficiency of a wind turbine?", "answer": "Betz's law limits it to about 59.3 percent of the energy in the wind.", "keywords": ["betz", "59"]}
+{"question": "Which offshore wind farm was built first and where?", "answer": "Vindeby in Denmark, built in 1991.", "keywords": ["vindeby", "denmark", "1991"]}
+{"question": "Explain what a monopile foundation is.", "answer": "A single large steel tube driven into the seabed that supports the turbine.", "keywords": ["steel", "seabed", "tube"]}
+{"question": "When would a developer choose floating wind?", "answer": "When the water is too deep for fixed foundations, roughly deeper than 60 metres.", "keywords": ["deep", "60"]}
+{"question": "Name the three main kinds of floating platform.", "answer": "Spar buoy, semi-submersible and tension-leg platform.", "keywords": ["spar", "semi-submersible", "tension"]}
+{"question": "Why is HVDC used for distant wind farms?", "answer": "Over long distances AC cables lose capacity, so DC has lower losses beyond about 80 to 100 km.", "keywords": ["distance", "losses", "dc"]}
+{"question": "What voltage are array cables usually?", "answer": "Typically 33 kV in older farms and 66 kV in newer ones.", "keywords": ["33", "66", "kv"]}
+{"question": "Why does a wind farm need a substation out at sea?", "answer": "It collects power from the turbines and steps up the voltage for export to shore.", "keywords": ["voltage", "export", "transform"]}
+{"question": "What causes scour around a foundation and how is it stopped?", "answer": "Currents and waves erode the seabed; rock scour protection is placed around the base.", "keywords": ["erosion", "rock", "current"]}
+{"question": "How do engineers reduce underwater noise from piling?", "answer": "With measures such as bubble curtains around the pile.", "keywords": ["bubble", "curtain", "noise"]}
+{"question": "What is the job of a jack-up vessel?", "answer": "It stands on legs on the seabed to give a stable platform for cranes installing turbines.", "keywords": ["legs", "seabed", "crane"]}
+{"question": "How is a service operation vessel different from a crew transfer vessel?", "answer": "An SOV stays offshore for weeks with technicians on board and can work in rougher seas; a CTV makes daily trips in calmer weather.", "keywords": ["weeks", "daily", "waves"]}
+{"question": "What does LCOE measure?", "answer": "The average lifetime cost of producing each megawatt-hour, including building, running and financing.", "keywords": ["cost", "megawatt", "lifetime"]}
+{"question": "How does a contract for difference work?", "answer": "The generator gets a fixed strike price; it is topped up when market prices are lower and pays back when they are higher.", "keywords": ["strike", "price", "difference"]}
+{"question": "What is a typical offshore capacity factor?", "answer": "Around 40 to 50 percent in good locations.", "keywords": ["40", "50", "percent"]}
+{"question": "What does a SCADA system record?", "answer": "Turbine data like power, wind speed, temperatures and vibrations every few seconds.", "keywords": ["power", "temperature", "vibration"]}
+{"question": "What is the wake effect?", "answer": "Turbines downstream sit in slower, turbulent air behind other turbines and produce less power.", "keywords": ["slower", "turbulent", "downstream"]}
+{"question": "How long is an offshore wind farm designed to operate?", "answer": "About 25 to 30 years.", "keywords": ["25", "30", "years"]}
+{"question": "Which country has the most offshore wind installed?", "answer": "China.", "keywords": ["china"]}

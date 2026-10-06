@@ -42,6 +42,7 @@ Wikipedia + notes + your docs
 | `train.py` | pretraining with warmup + cosine LR, eval and checkpoints |
 | `finetune.py` | supervised fine-tuning on `data/qa/*.jsonl` |
 | `chat.py` / `sample.py` | talk to the model / see raw generations |
+| `evaluate.py` | scores a checkpoint on `data/eval/eval_qa.jsonl` (answer perplexity + keyword recall) |
 | `data/notes/` | primer notes I wrote on the main offshore wind topics |
 | `data/qa/seed_qa.jsonl` | 80 hand-written Q&A pairs to start fine-tuning with |
 
@@ -70,6 +71,7 @@ python scripts/tokenize_corpus.py
 python train.py --preset small
 python finetune.py
 python chat.py
+python evaluate.py           # score it on held-out questions
 ```
 
 It picks CUDA or Apple Silicon (MPS) automatically if available.
@@ -104,7 +106,7 @@ So the point of this project is learning how the whole stack works, not replacin
 - [x] supervised fine-tuning with answer-only loss
 - [x] seed Q&A set and primer notes
 - [x] tests
-- [ ] evaluation script: held-out offshore wind questions, scored automatically
+- [x] evaluation script: held-out offshore wind questions, scored automatically
 - [ ] grow the Q&A set to 1,000+ pairs
 - [ ] more corpus sources (open reports, glossaries)
 - [ ] RoPE positional embeddings + a KV cache for faster generation
