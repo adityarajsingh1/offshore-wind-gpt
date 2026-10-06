@@ -20,7 +20,7 @@ from owgpt.config import PRESETS, TrainConfig
 from owgpt.data import get_batch, load_tokens
 from owgpt.model import GPT
 from owgpt.tokenizer import Tokenizer
-from owgpt.train_utils import load_model, lr_at, pick_device, save_checkpoint
+from owgpt.train_utils import LossLog, load_model, lr_at, pick_device, save_checkpoint
 
 PROC = Path("data/processed")
 CKPT_DIR = Path("checkpoints")
@@ -77,6 +77,7 @@ def main():
         optimizer.load_state_dict(ckpt["optimizer"])
 
     block_size = model.cfg.block_size
+    log = LossLog(CKPT_DIR / "pretrain_log.csv", fresh=not args.resume)
     best_val = float("inf")
     t0 = time.time()
 
@@ -87,6 +88,7 @@ def main():
         if step % cfg.eval_every == 0 or step == cfg.max_steps - 1:
             losses = estimate_loss(model, {"train": train_data, "val": val_data}, cfg, block_size, device)
             print(f"step {step}: train {losses['train']:.3f}, val {losses['val']:.3f}")
+            log.add(step, losses["train"], losses["val"])
             if losses["val"] < best_val:
                 best_val = losses["val"]
                 save_checkpoint(ckpt_path, model, optimizer, step, best_val)

@@ -39,3 +39,16 @@ def load_model(path, device="cpu"):
     model = GPT(ModelConfig(**ckpt["model_config"]))
     model.load_state_dict(ckpt["model"])
     return model.to(device), ckpt
+
+
+class LossLog:
+    """Appends eval results to a small csv so runs can be plotted later."""
+
+    def __init__(self, path, fresh=True):
+        self.path = path
+        if fresh or not path.exists():
+            path.write_text("step,train_loss,val_loss\n", encoding="utf-8")
+
+    def add(self, step, train_loss, val_loss):
+        with open(self.path, "a", encoding="utf-8") as f:
+            f.write(f"{step},{train_loss:.4f},{val_loss:.4f}\n")

@@ -17,7 +17,7 @@ import torch
 
 from owgpt.sft import SFTBatches, load_pairs
 from owgpt.tokenizer import Tokenizer
-from owgpt.train_utils import load_model, pick_device, save_checkpoint
+from owgpt.train_utils import LossLog, load_model, pick_device, save_checkpoint
 
 PROC = Path("data/processed")
 
@@ -57,6 +57,7 @@ def main():
 
     optimizer = model.configure_optimizer(args.lr, weight_decay=0.0)
     best = float("inf")
+    log = LossLog(Path(args.out).with_name("sft_log.csv"))
     for step in range(args.steps):
         x, y, m = train.get_batch(args.batch_size, device)
         _, loss = model(x, y, loss_mask=m)
@@ -68,6 +69,7 @@ def main():
         if step % 100 == 0 or step == args.steps - 1:
             v = eval_loss(model, val, 5, device)
             print(f"step {step}: train {loss.item():.3f}, val {v:.3f}")
+            log.add(step, loss.item(), v)
             if v < best:
                 best = v
                 save_checkpoint(args.out, model, None, step, v)

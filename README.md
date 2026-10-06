@@ -42,6 +42,7 @@ Wikipedia + notes + your docs
 | `train.py` | pretraining with warmup + cosine LR, eval and checkpoints |
 | `finetune.py` | supervised fine-tuning on `data/qa/*.jsonl` |
 | `chat.py` / `sample.py` | talk to the model / see raw generations |
+| `plot_loss.py` | plots train/val loss from the csv logs into `checkpoints/loss.png` |
 | `evaluate.py` | scores a checkpoint on `data/eval/eval_qa.jsonl` (answer perplexity + keyword recall) |
 | `data/notes/` | primer notes I wrote on the main offshore wind topics |
 | `data/qa/seed_qa.jsonl` | 80 hand-written Q&A pairs to start fine-tuning with |
@@ -112,7 +113,7 @@ So the point of this project is learning how the whole stack works, not replacin
 - [ ] RoPE positional embeddings + a KV cache for faster generation
 - [ ] retrieval: look up relevant corpus passages and feed them in with the question, so answers are grounded in real text
 - [ ] small Streamlit chat UI
-- [ ] training curves plotted after each run
+- [x] training curves (`python plot_loss.py` after a run)
 
 ## Credits
 
