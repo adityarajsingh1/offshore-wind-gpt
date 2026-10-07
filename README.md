@@ -110,7 +110,8 @@ So the point of this project is learning how the whole stack works, not replacin
 - [x] evaluation script: held-out offshore wind questions, scored automatically
 - [ ] grow the Q&A set to 1,000+ pairs
 - [ ] more corpus sources (open reports, glossaries)
-- [ ] RoPE positional embeddings + a KV cache for faster generation
+- [x] KV cache for faster generation (about 4x faster on the small model on CPU)
+- [ ] RoPE positional embeddings
 - [ ] retrieval: look up relevant corpus passages and feed them in with the question, so answers are grounded in real text
 - [ ] small Streamlit chat UI
 - [x] training curves (`python plot_loss.py` after a run)

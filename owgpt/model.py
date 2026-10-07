@@ -27,17 +27,24 @@ class SelfAttention(nn.Module):
         self.dropout = cfg.dropout
         self.resid_drop = nn.Dropout(cfg.dropout)
 
-    def forward(self, x):
+    def forward(self, x, past=None):
+        """past is the (k, v) cache from earlier tokens, only used when generating."""
         B, T, C = x.shape
         q, k, v = self.qkv(x).split(C, dim=2)
         # (B, T, C) -> (B, heads, T, head_size)
         q, k, v = (t.view(B, T, self.n_head, C // self.n_head).transpose(1, 2) for t in (q, k, v))
-        # is_causal=True means each position can only look at itself and earlier positions
+        if past is not None:
+            # the new token(s) attend to everything we've already seen
+            assert T == 1, "with a cache, feed one token at a time"
+            k = torch.cat([past[0], k], dim=2)
+            v = torch.cat([past[1], v], dim=2)
+        # is_causal=True means each position can only look at itself and earlier positions.
+        # a single new token is the last position anyway, so it needs no mask
         y = F.scaled_dot_product_attention(
-            q, k, v, is_causal=True, dropout_p=self.dropout if self.training else 0.0
+            q, k, v, is_causal=past is None, dropout_p=self.dropout if self.training else 0.0
         )
         y = y.transpose(1, 2).contiguous().view(B, T, C)
-        return self.resid_drop(self.proj(y))
+        return self.resid_drop(self.proj(y)), (k, v)
 
 
 class MLP(nn.Module):
@@ -59,11 +66,12 @@ class Block(nn.Module):
         self.ln2 = nn.LayerNorm(cfg.n_embd)
         self.mlp = MLP(cfg)
 
-    def forward(self, x):
+    def forward(self, x, past=None):
         # pre-norm + residual connections, trains much more stably than post-norm
-        x = x + self.attn(self.ln1(x))
+        attn_out, present = self.attn(self.ln1(x), past)
+        x = x + attn_out
         x = x + self.mlp(self.ln2(x))
-        return x
+        return x, present
 
 
 class GPT(nn.Module):
@@ -104,7 +112,7 @@ class GPT(nn.Module):
         pos = torch.arange(T, device=idx.device)
         x = self.drop(self.tok_emb(idx) + self.pos_emb(pos))
         for block in self.blocks:
-            x = block(x)
+            x, _ = block(x)
         logits = self.head(self.ln_f(x))
 
         if targets is None:
@@ -120,10 +128,36 @@ class GPT(nn.Module):
         return logits, loss
 
     @torch.no_grad()
-    def generate(self, idx, max_new_tokens, temperature=0.8, top_k=50, stop_ids=None):
+    def forward_cached(self, idx, cache=None):
+        """
+        Like forward(), but keeps the attention keys/values of earlier tokens
+        so each new token only costs one position of work instead of
+        re-running the whole sequence. Returns (logits, new_cache).
+        """
+        start = 0 if cache is None else cache[0][0].size(2)
+        T = idx.size(1)
+        pos = torch.arange(start, start + T, device=idx.device)
+        x = self.tok_emb(idx) + self.pos_emb(pos)
+        new_cache = []
+        for i, block in enumerate(self.blocks):
+            x, present = block(x, None if cache is None else cache[i])
+            new_cache.append(present)
+        return self.head(self.ln_f(x)), new_cache
+
+    @torch.no_grad()
+    def generate(self, idx, max_new_tokens, temperature=0.8, top_k=50, stop_ids=None, use_cache=True):
+        cache = None
         for _ in range(max_new_tokens):
-            idx_cond = idx[:, -self.cfg.block_size:]
-            logits, _ = self(idx_cond)
+            # the cache only works while everything fits in the context window (our
+            # position embeddings stop at block_size). after that, crop and recompute
+            if use_cache and idx.size(1) <= self.cfg.block_size:
+                if cache is None:
+                    logits, cache = self.forward_cached(idx)
+                else:
+                    logits, cache = self.forward_cached(idx[:, -1:], cache)
+            else:
+                cache = None
+                logits, _ = self(idx[:, -self.cfg.block_size:])
             logits = logits[:, -1, :] / max(temperature, 1e-5)
             if top_k:
                 v, _ = torch.topk(logits, min(top_k, logits.size(-1)))

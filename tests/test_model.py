@@ -54,3 +54,28 @@ def test_generate_stops_at_stop_token():
     model = GPT(CFG).eval()
     out = model.generate(torch.zeros(1, 1, dtype=torch.long), 20, stop_ids=set(range(100)))
     assert out.shape[1] == 2
+
+
+def test_kv_cache_gives_the_same_logits():
+    torch.manual_seed(0)
+    model = GPT(CFG).eval()
+    x = torch.randint(0, 100, (1, 12))
+    full, _ = model(x)
+    # feed the first 5 tokens at once, then the rest one by one through the cache
+    logits, cache = model.forward_cached(x[:, :5])
+    steps = [logits[:, -1]]
+    for t in range(5, 12):
+        logits, cache = model.forward_cached(x[:, t:t + 1], cache)
+        steps.append(logits[:, -1])
+    assert torch.allclose(torch.stack(steps, 1), full[:, 4:], atol=1e-4)
+
+
+def test_generate_same_with_and_without_cache():
+    model = GPT(CFG).eval()
+    start = torch.randint(0, 100, (1, 3))
+    # past block_size too, so the fallback path gets used as well
+    torch.manual_seed(1)
+    a = model.generate(start, 40, temperature=1e-6, top_k=1, use_cache=True)
+    torch.manual_seed(1)
+    b = model.generate(start, 40, temperature=1e-6, top_k=1, use_cache=False)
+    assert torch.equal(a, b)
