@@ -79,3 +79,38 @@ def test_generate_same_with_and_without_cache():
     torch.manual_seed(1)
     b = model.generate(start, 40, temperature=1e-6, top_k=1, use_cache=False)
     assert torch.equal(a, b)
+
+
+def test_both_position_schemes_work():
+    from dataclasses import replace
+    for rope in (True, False):
+        model = GPT(replace(CFG, rope=rope)).eval()
+        x = torch.randint(0, 100, (1, 10))
+        full, _ = model(x)
+        logits, cache = model.forward_cached(x[:, :4])
+        for t in range(4, 10):
+            logits, cache = model.forward_cached(x[:, t:t + 1], cache)
+        assert torch.allclose(logits[:, -1], full[:, -1], atol=1e-4)
+
+
+def test_rope_scores_depend_on_distance_only():
+    from owgpt.model import apply_rope, rope_tables
+    cos, sin = rope_tables(8, 32)
+    q, k = torch.randn(1, 1, 1, 8), torch.randn(1, 1, 1, 8)
+    def score(i, j):
+        qi = apply_rope(q, cos[i:i + 1], sin[i:i + 1])
+        kj = apply_rope(k, cos[j:j + 1], sin[j:j + 1])
+        return (qi * kj).sum()
+    # same gap of 3, different absolute positions
+    assert torch.isclose(score(5, 2), score(20, 17), atol=1e-5)
+
+
+def test_old_checkpoints_without_rope_still_load(tmp_path):
+    from dataclasses import asdict, replace
+    from owgpt.train_utils import load_model
+    old = GPT(replace(CFG, rope=False))
+    cfg = asdict(old.cfg)
+    del cfg["rope"]  # what an old checkpoint looks like
+    torch.save({"model": old.state_dict(), "model_config": cfg, "step": 0}, tmp_path / "old.pt")
+    model, _ = load_model(tmp_path / "old.pt")
+    assert model.cfg.rope is False

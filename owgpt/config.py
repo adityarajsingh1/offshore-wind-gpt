@@ -17,6 +17,7 @@ class ModelConfig:
     n_head: int = 6
     n_embd: int = 384
     dropout: float = 0.1
+    rope: bool = True       # rotary position embeddings instead of a learned position table
 
 
 @dataclass

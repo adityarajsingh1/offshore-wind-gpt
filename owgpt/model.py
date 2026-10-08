@@ -17,6 +17,27 @@ import torch.nn.functional as F
 from .config import ModelConfig
 
 
+def rope_tables(head_dim, max_len, base=10000.0):
+    """
+    Precompute the rotation angles for rotary embeddings (RoPE).
+
+    RoPE encodes position by rotating pairs of dimensions in q and k by an
+    angle that grows with the position. The dot product q.k then only
+    depends on how far apart two tokens are, which is exactly what attention
+    cares about, and there are no extra parameters to learn.
+    """
+    inv_freq = 1.0 / (base ** (torch.arange(0, head_dim, 2).float() / head_dim))
+    angles = torch.outer(torch.arange(max_len).float(), inv_freq)  # (max_len, head_dim / 2)
+    return angles.cos(), angles.sin()
+
+
+def apply_rope(x, cos, sin):
+    # x is (B, heads, T, head_dim). rotate each (even, odd) pair of dims
+    x1, x2 = x[..., ::2], x[..., 1::2]
+    rotated = torch.stack([x1 * cos - x2 * sin, x1 * sin + x2 * cos], dim=-1)
+    return rotated.flatten(-2)
+
+
 class SelfAttention(nn.Module):
     def __init__(self, cfg: ModelConfig):
         super().__init__()
@@ -27,12 +48,18 @@ class SelfAttention(nn.Module):
         self.dropout = cfg.dropout
         self.resid_drop = nn.Dropout(cfg.dropout)
 
-    def forward(self, x, past=None):
-        """past is the (k, v) cache from earlier tokens, only used when generating."""
+    def forward(self, x, past=None, rope=None):
+        """
+        past is the (k, v) cache from earlier tokens, only used when generating.
+        rope is (cos, sin) for the positions of the tokens in x, if RoPE is on.
+        """
         B, T, C = x.shape
         q, k, v = self.qkv(x).split(C, dim=2)
         # (B, T, C) -> (B, heads, T, head_size)
         q, k, v = (t.view(B, T, self.n_head, C // self.n_head).transpose(1, 2) for t in (q, k, v))
+        if rope is not None:
+            # rotate before caching, so cached keys already carry their positions
+            q, k = apply_rope(q, *rope), apply_rope(k, *rope)
         if past is not None:
             # the new token(s) attend to everything we've already seen
             assert T == 1, "with a cache, feed one token at a time"
@@ -66,9 +93,9 @@ class Block(nn.Module):
         self.ln2 = nn.LayerNorm(cfg.n_embd)
         self.mlp = MLP(cfg)
 
-    def forward(self, x, past=None):
+    def forward(self, x, past=None, rope=None):
         # pre-norm + residual connections, trains much more stably than post-norm
-        attn_out, present = self.attn(self.ln1(x), past)
+        attn_out, present = self.attn(self.ln1(x), past, rope)
         x = x + attn_out
         x = x + self.mlp(self.ln2(x))
         return x, present
@@ -79,7 +106,13 @@ class GPT(nn.Module):
         super().__init__()
         self.cfg = cfg
         self.tok_emb = nn.Embedding(cfg.vocab_size, cfg.n_embd)
-        self.pos_emb = nn.Embedding(cfg.block_size, cfg.n_embd)
+        if cfg.rope:
+            cos, sin = rope_tables(cfg.n_embd // cfg.n_head, cfg.block_size)
+            # buffers move with .to(device) but aren't saved, they're cheap to rebuild
+            self.register_buffer("rope_cos", cos, persistent=False)
+            self.register_buffer("rope_sin", sin, persistent=False)
+        else:
+            self.pos_emb = nn.Embedding(cfg.block_size, cfg.n_embd)
         self.drop = nn.Dropout(cfg.dropout)
         self.blocks = nn.ModuleList([Block(cfg) for _ in range(cfg.n_layer)])
         self.ln_f = nn.LayerNorm(cfg.n_embd)
@@ -104,15 +137,25 @@ class GPT(nn.Module):
 
     def num_params(self):
         # position embeddings aren't really "model" params, GPT-2 paper excludes them too
-        return sum(p.numel() for p in self.parameters()) - self.pos_emb.weight.numel()
+        n = sum(p.numel() for p in self.parameters())
+        return n if self.cfg.rope else n - self.pos_emb.weight.numel()
+
+    def _embed(self, idx, start=0):
+        """Token embeddings (+ learned positions if not using RoPE), and the rope angles."""
+        T = idx.size(1)
+        x = self.tok_emb(idx)
+        if self.cfg.rope:
+            return x, (self.rope_cos[start:start + T], self.rope_sin[start:start + T])
+        pos = torch.arange(start, start + T, device=idx.device)
+        return x + self.pos_emb(pos), None
 
     def forward(self, idx, targets=None, loss_mask=None):
         B, T = idx.shape
         assert T <= self.cfg.block_size, f"sequence of {T} is longer than block_size {self.cfg.block_size}"
-        pos = torch.arange(T, device=idx.device)
-        x = self.drop(self.tok_emb(idx) + self.pos_emb(pos))
+        x, rope = self._embed(idx)
+        x = self.drop(x)
         for block in self.blocks:
-            x, _ = block(x)
+            x, _ = block(x, rope=rope)
         logits = self.head(self.ln_f(x))
 
         if targets is None:
@@ -135,12 +178,10 @@ class GPT(nn.Module):
         re-running the whole sequence. Returns (logits, new_cache).
         """
         start = 0 if cache is None else cache[0][0].size(2)
-        T = idx.size(1)
-        pos = torch.arange(start, start + T, device=idx.device)
-        x = self.tok_emb(idx) + self.pos_emb(pos)
+        x, rope = self._embed(idx, start)
         new_cache = []
         for i, block in enumerate(self.blocks):
-            x, present = block(x, None if cache is None else cache[i])
+            x, present = block(x, None if cache is None else cache[i], rope)
             new_cache.append(present)
         return self.head(self.ln_f(x)), new_cache
 
@@ -148,8 +189,8 @@ class GPT(nn.Module):
     def generate(self, idx, max_new_tokens, temperature=0.8, top_k=50, stop_ids=None, use_cache=True):
         cache = None
         for _ in range(max_new_tokens):
-            # the cache only works while everything fits in the context window (our
-            # position embeddings stop at block_size). after that, crop and recompute
+            # the cache only works while everything fits in the context window (the
+            # position tables stop at block_size). after that, crop and recompute
             if use_cache and idx.size(1) <= self.cfg.block_size:
                 if cache is None:
                     logits, cache = self.forward_cached(idx)

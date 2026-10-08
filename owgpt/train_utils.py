@@ -36,7 +36,9 @@ def save_checkpoint(path, model, optimizer, step, val_loss):
 
 def load_model(path, device="cpu"):
     ckpt = torch.load(path, map_location=device)
-    model = GPT(ModelConfig(**ckpt["model_config"]))
+    # checkpoints from before RoPE was added used learned position embeddings
+    cfg = {"rope": False, **ckpt["model_config"]}
+    model = GPT(ModelConfig(**cfg))
     model.load_state_dict(ckpt["model"])
     return model.to(device), ckpt
 

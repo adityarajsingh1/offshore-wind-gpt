@@ -32,7 +32,7 @@ Wikipedia + notes + your docs
 | file | what it does |
 |---|---|
 | `owgpt/tokenizer.py` | byte-level BPE tokenizer written from scratch |
-| `owgpt/model.py` | the GPT: token + position embeddings, causal self-attention blocks, weight-tied output |
+| `owgpt/model.py` | the GPT: token embeddings + RoPE, causal self-attention blocks, KV cache, weight-tied output |
 | `owgpt/config.py` | model sizes (`tiny`, `small`, `medium`) and training settings |
 | `owgpt/data.py` | tokenized corpus as a memmapped array, random training windows |
 | `owgpt/sft.py` | chat formatting and answer-only loss masks for fine-tuning |
@@ -111,7 +111,7 @@ So the point of this project is learning how the whole stack works, not replacin
 - [ ] grow the Q&A set to 1,000+ pairs
 - [ ] more corpus sources (open reports, glossaries)
 - [x] KV cache for faster generation (about 4x faster on the small model on CPU)
-- [ ] RoPE positional embeddings
+- [x] RoPE positional embeddings (on by default, old checkpoints still load)
 - [ ] retrieval: look up relevant corpus passages and feed them in with the question, so answers are grounded in real text
 - [ ] small Streamlit chat UI
 - [x] training curves (`python plot_loss.py` after a run)
