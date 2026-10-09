@@ -45,7 +45,7 @@ Wikipedia + notes + your docs
 | `plot_loss.py` | plots train/val loss from the csv logs into `checkpoints/loss.png` |
 | `evaluate.py` | scores a checkpoint on `data/eval/eval_qa.jsonl` (answer perplexity + keyword recall) |
 | `data/notes/` | primer notes I wrote on the main offshore wind topics |
-| `data/qa/seed_qa.jsonl` | 80 hand-written Q&A pairs to start fine-tuning with |
+| `data/qa/*.jsonl` | 130 hand-written Q&A pairs for fine-tuning |
 
 ## Getting started
 
@@ -105,7 +105,7 @@ So the point of this project is learning how the whole stack works, not replacin
 - [x] BPE tokenizer from scratch
 - [x] GPT model + pretraining loop
 - [x] supervised fine-tuning with answer-only loss
-- [x] seed Q&A set and primer notes
+- [x] seed Q&A set and primer notes (130 pairs so far)
 - [x] tests
 - [x] evaluation script: held-out offshore wind questions, scored automatically
 - [ ] grow the Q&A set to 1,000+ pairs
