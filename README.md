@@ -42,6 +42,7 @@ Wikipedia + notes + your docs
 | `train.py` | pretraining with warmup + cosine LR, eval and checkpoints |
 | `finetune.py` | supervised fine-tuning on `data/qa/*.jsonl` |
 | `chat.py` / `sample.py` | talk to the model / see raw generations |
+| `app.py` | Streamlit web chat with checkpoint picker, temperature and length sliders |
 | `plot_loss.py` | plots train/val loss from the csv logs into `checkpoints/loss.png` |
 | `evaluate.py` | scores a checkpoint on `data/eval/eval_qa.jsonl` (answer perplexity + keyword recall) |
 | `data/notes/` | primer notes I wrote on the main offshore wind topics |
@@ -72,6 +73,7 @@ python scripts/tokenize_corpus.py
 python train.py --preset small
 python finetune.py
 python chat.py
+streamlit run app.py         # or chat in the browser
 python evaluate.py           # score it on held-out questions
 ```
 
@@ -113,7 +115,7 @@ So the point of this project is learning how the whole stack works, not replacin
 - [x] KV cache for faster generation (about 4x faster on the small model on CPU)
 - [x] RoPE positional embeddings (on by default, old checkpoints still load)
 - [ ] retrieval: look up relevant corpus passages and feed them in with the question, so answers are grounded in real text
-- [ ] small Streamlit chat UI
+- [x] small Streamlit chat UI (`streamlit run app.py`)
 - [x] training curves (`python plot_loss.py` after a run)
 
 ## Credits
